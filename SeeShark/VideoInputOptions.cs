@@ -13,9 +13,11 @@ namespace SeeShark
     /// </summary>
     /// <remarks>
     /// Some examples of input options are:
-    /// https://ffmpeg.org/ffmpeg-devices.html#video4linux2_002c-v4l2
-    /// https://ffmpeg.org/ffmpeg-devices.html#dshow
-    /// https://ffmpeg.org/ffmpeg-devices.html#avfoundation
+    /// <list type="bullet">
+    /// <item>https://ffmpeg.org/ffmpeg-devices.html#video4linux2_002c-v4l2</item>
+    /// <item>https://ffmpeg.org/ffmpeg-devices.html#dshow</item>
+    /// <item>https://ffmpeg.org/ffmpeg-devices.html#avfoundation</item>
+    /// </list>
     /// </remarks>
     public class VideoInputOptions
     {
@@ -36,6 +38,7 @@ namespace SeeShark
         public AVRational? Framerate { get; set; }
         /// <summary>
         /// To request a specific input format for the video stream.
+        /// If the video stream is raw, it is the name of its pixel format, otherwise it is the name of its codec.
         /// </summary>
         public string? InputFormat { get; set; }
 
@@ -51,12 +54,26 @@ namespace SeeShark
                 (int width, int height) = VideoSize.Value;
                 dict.Add("video_size", $"{width}x{height}");
             }
+
             if (Framerate != null)
                 dict.Add("framerate", $"{Framerate.Value.num}/{Framerate.Value.den}");
+
+            // I have no idea why "YUYV" specifically is like this...
             if (InputFormat != null)
-                dict.Add("input_format", InputFormat);
+                dict.Add("input_format", InputFormat == "YUYV" ? "yuv422p" : InputFormat.ToLower());
 
             return dict;
+        }
+
+        public override string ToString()
+        {
+            string s = $"{InputFormat} {VideoSize}";
+            if (Framerate != null)
+            {
+                float fps = (float)Framerate.Value.num / Framerate.Value.den;
+                s += $" - {fps:0.000} fps";
+            }
+            return s;
         }
     }
 }
